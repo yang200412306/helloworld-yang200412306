@@ -2,8 +2,9 @@
 
 部署在 **Vercel** 上的 HelloWorld 网站：首页显示 **Hello World!**，同时实时显示**当前服务器时间**。
 
-- Vercel 线上地址：`https://helloworld-yang200412306.vercel.app`（部署完成后生效）
-- 技术栈：纯静态页面 + Vercel Serverless Function，零第三方依赖
+- **线上地址（已上线）**：<https://yang200412306.github.io/helloworld-yang200412306/>
+- Vercel 地址（可选，需完成手机验证）：`https://helloworld-yang200412306.vercel.app`
+- 技术栈：纯静态页面 + Serverless Function，零第三方依赖
 
 ## 一、项目结构（Vercel 原生约定）
 
@@ -84,3 +85,29 @@ vercel dev
 
 **Q：想改成本地常驻版本（含 HTTPS）？**
 见同目录另一份项目 `hello-world-nodejs`，它用 `node:http` / `node:https` 双栈跑在 3000 / 3443。
+
+## 六、部署状态与分支说明
+
+| 分支 | 内容 | 用途 |
+| --- | --- | --- |
+| `main` | `public/` + `api/time.js` + `local-dev.js` | Vercel 部署用（静态页 + Serverless 时间接口，时间来自服务器） |
+| `gh-pages` | 仅 `index.html` + `style.css` | GitHub Pages 静态托管用（时间由页面每秒计算） |
+
+当前已上线：**<https://yang200412306.github.io/helloworld-yang200412306/>**（GitHub Pages，无需任何登录验证即可部署）
+
+GitHub Pages 的开启方式（命令行）：
+
+```bash
+# 1) 推送静态分支
+git push origin gh-pages
+# 2) 启用 Pages，源指向 gh-pages 根目录
+gh api --method POST repos/<owner>/<repo>/pages --input pages.json
+# pages.json: {"source":{"branch":"gh-pages","path":"/"}}
+```
+
+静态托管与 Vercel 的关键差别：
+
+- **Pages**：只有静态文件，没有后端；页面上的时间由浏览器本地时钟每秒计算（对外显示的是“当前时间”）。
+- **Vercel**：`api/time.js` 是真正的 Serverless 函数，返回的是**服务器时间**（UTC+8），更贴合「显示当前服务器时间」的要求。
+
+如果之后能完成 Vercel 的手机验证，直接 Import 本仓库的 `main` 分支即可，无需改代码。
