@@ -1,0 +1,14 @@
+{
+  "name": "helloworld-yang200412306",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Vercel 版 HelloWorld 网站：静态首页 + Serverless 服务器时间接口",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node local-dev.js",
+    "dev": "vercel dev"
+  },
+  "license": "MIT"
+}

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hello World | 服务器时间</title>
+  <meta name="description" content="部署在 Vercel 上的 Hello World 网站，实时显示当前服务器时间。" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌍</text></svg>" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <main class="card">
+    <header class="card__header">
+      <span class="dot" aria-hidden="true"></span>
+      <span class="badge">Vercel · Serverless</span>
+    </header>
+
+    <h1 class="hello">Hello World!</h1>
+    <p class="subtitle">这是部署在 Vercel 上的第一个网站，时间由 <code>/api/time</code> 接口实时提供</p>
+
+    <section class="time-panel" aria-live="polite">
+      <div class="time-panel__label">
+        <span>当前服务器时间</span>
+        <span class="status" id="status" data-state="loading">
+          <i class="status__dot" aria-hidden="true"></i>
+          <span id="status-text">正在同步</span>
+        </span>
+      </div>
+
+      <div class="clock" id="clock">--:--:--</div>
+
+      <div class="date-line">
+        <span id="date-text">正在获取服务器时间…</span>
+        <span class="divider"></span>
+        <span id="weekday-text"></span>
+      </div>
+
+      <div class="meta">
+        <span>完整时间：<strong id="full-time">—</strong></span>
+        <span>时区：<strong id="timezone">—</strong></span>
+        <span>运行环境：<strong id="environment">—</strong></span>
+        <span>执行区域：<strong id="region">—</strong></span>
+        <span>Node 版本：<strong id="node-version">—</strong></span>
+      </div>
+    </section>
+
+    <footer class="card__footer">
+      <p>数据来源：<code>GET /api/time</code> · 每 1 秒自动同步服务器时间</p>
+      <button type="button" id="refresh" class="btn">立即刷新</button>
+    </footer>
+  </main>
+
+  <script>
+    (function () {
+      'use strict';
+
+      const els = {
+        clock: document.getElementById('clock'),
+        dateText: document.getElementById('date-text'),
+        weekdayText: document.getElementById('weekday-text'),
+        fullTime: document.getElementById('full-time'),
+        timezone: document.getElementById('timezone'),
+        environment: document.getElementById('environment'),
+        region: document.getElementById('region'),
+        nodeVersion: document.getElementById('node-version'),
+        status: document.getElementById('status'),
+        statusText: document.getElementById('status-text'),
+        refresh: document.getElementById('refresh')
+      };
+
+      function renderTime(data) {
+        els.clock.textContent = data.timeText;
+        els.dateText.textContent = data.dateText;
+        els.weekdayText.textContent = data.weekday;
+        els.fullTime.textContent = data.text;
+        els.timezone.textContent = data.timeZone;
+        els.environment.textContent = data.environment;
+        els.region.textContent = data.region;
+        els.nodeVersion.textContent = data.nodeVersion;
+      }
+
+      function setStatus(state, text) {
+        els.status.dataset.state = state;
+        els.statusText.textContent = text;
+      }
+
+      let timerId = null;
+
+      async function syncTime() {
+        try {
+          const response = await fetch('/api/time', { cache: 'no-store' });
+          if (!response.ok) throw new Error('HTTP ' + response.status);
+          const data = await response.json();
+          if (!data || !data.ok) throw new Error('接口返回异常');
+
+          renderTime(data);
+          setStatus('ok', '已连接');
+        } catch (error) {
+          setStatus('error', '连接中断');
+          tickLocally();
+        }
+      }
+
+      // 网络异常时在本地补一秒，避免时钟停住
+      function tickLocally() {
+        const text = els.clock.textContent || '';
+        const parts = text.split(':').map(Number);
+        if (parts.length !== 3 || parts.some(Number.isNaN)) return;
+
+        let [h, m, s] = parts;
+        s += 1;
+        if (s >= 60) { s = 0; m += 1; }
+        if (m >= 60) { m = 0; h += 1; }
+        if (h >= 24) { h = 0; }
+
+        const pad = function (n) { return String(n).padStart(2, '0'); };
+        els.clock.textContent = pad(h) + ':' + pad(m) + ':' + pad(s);
+      }
+
+      function start() {
+        syncTime();
+        if (timerId) clearInterval(timerId);
+        timerId = setInterval(syncTime, 1000);
+      }
+
+      els.refresh.addEventListener('click', function () {
+        setStatus('ok', '正在刷新…');
+        syncTime();
+      });
+
+      document.addEventListener('visibilitychange', function () {
+        if (!document.hidden) syncTime();
+      });
+
+      start();
+    })();
+  </script>
+</body>
+</html>
